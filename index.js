@@ -1,13 +1,13 @@
-const http = require("http");
-const express = require("express");
-const app = express();
-const server = http.createServer(app);
-const port = 8844;
+const http = require("http")
+const express = require("express")
+const app = express()
+const server = http.createServer(app)
+const port = 8845
 
-app.use(express.static("public"));
+app.use(express.static("public"))
 app.get("/", () => {
   // Serve public/index.html by default
-});
-server.listen(port);
+})
+server.listen(port)
 
-console.log(`IDE running on http://localhost: ${port}.`);
+console.log(`IDE running on http://localhost: ${port}.`)

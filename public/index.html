@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Strange Attractors</title>
+    <title>Rössler Attractor</title>
     <meta charset="utf-8" />
     <meta
       name="viewport"
@@ -87,11 +87,6 @@
       .black-btn:active {
         background-color: #989898;
       }
-      #randomize {
-        position: absolute;
-        top: 50px;
-        left: 10px;
-      }
       #galaxy-name {
         position: absolute;
         top: -10px;
@@ -102,13 +97,9 @@
         position: absolute;
         width: 260px;
         bottom: 10px;
-        right: 30px;
+        right: 50px;
         color: white;
         font-family: "Roboto";
-      }
-      #formula p {
-        margin-block-start: 3px;
-        margin-block-end: 3px;
       }
       .span-param {
         font-family: "Roboto";
@@ -138,8 +129,8 @@
         position: absolute;
         display: block;
         color: white;
-        bottom: 10px;
-        left: 15px;
+        bottom: 35px;
+        left: 40px;
         width: 80%;
       }
       label {
@@ -172,62 +163,39 @@
     </style>
   </head>
   <body>
-    <h1 id="loading">LOADING...</h1>
-    <h2 id="galaxy-name">LORENZ I</h2>
-    <a id="randomize" href="#" class="black-btn" onclick="randomize()"
-      >RANDOMIZE</a
-    >
+    <h1 id="galaxy-name">Rössler</h1>
     <div id="formula">
-      <p>Formula:</p>
       <span
-        >\begin{align} \frac{\mathrm{d}x}{\mathrm{d}t} &= \sigma (y - x),
-        \\[6pt] \frac{\mathrm{d}y}{\mathrm{d}t} &= x (\rho - z) - y, \\[6pt]
-        \frac{\mathrm{d}z}{\mathrm{d}t} &= x y - \beta z. \end{align}</span
+        >\begin{align} \frac{\mathrm{d}x}{\mathrm{d}t} &= -(y + z), \\[6pt]
+        \frac{\mathrm{d}y}{\mathrm{d}t} &= x + ay, \\[6pt]
+        \frac{\mathrm{d}z}{\mathrm{d}t} &= b + z(x - c) \end{align}</span
       >
     </div>
-    <h6 id="galaxy-settings"></h6>
     <div id="param-controls">
+      <!-- <div>
+        <label for="points">Points:</label>
+        <input name="points" type="range" min="0" max="1000000" step="1" />
+        <span class="span-param"></span>
+      </div> -->
       <div>
-        <label for="a">σ:</label>
-        <input
-          name="a"
-          type="range"
-          min="5000000"
-          max="20000000"
-          value="10000000"
-          step="1"
-        />
+        <label for="a">a:</label>
+        <input name="a" type="range" min="0" max="1000000" step="1000" />
         <span id="legend-a" class="span-param"></span>
       </div>
       <div>
-        <label for="b">ρ:</label>
-        <input
-          name="b"
-          type="range"
-          min="5000000"
-          max="50000000"
-          value="28000000"
-          step="1"
-        />
+        <label for="b">b:</label>
+        <input name="b" type="range" min="0" max="1000000" step="1" />
         <span id="legend-b" class="span-param"></span>
       </div>
       <div>
-        <label for="c">β:</label>
-        <input
-          name="c"
-          type="range"
-          min="1000000"
-          max="5000000"
-          value="2666666"
-          step="1"
-        />
+        <label for="c">c:</label>
+        <input name="c" type="range" min="0" max="10000000" step="1" />
         <span id="legend-c" class="span-param"></span>
       </div>
     </div>
-    <!-- TODO: Restore -->
-    <!-- <a id="blog-link" href="https://www.adelriosantiago.com/gitblog"
-      >GO TO ARTICLE</a
-    > -->
+    <a id="blog-link" href="https://www.adelriosantiago.com/gitblog"
+      >READ ARTICLE</a
+    >
     <div id="container"></div>
 
     <script id="ortho-vs" type="x-shader/x-vertex">
@@ -271,34 +239,34 @@
     <script>
       "use strict"
 
-      const NUM_POINTS = 20000
+      let NUM_POINTS = 50000
       const ANIM_SPEED = 300
       const ANIMATION_FRAMES = NUM_POINTS * ANIM_SPEED
       const SLIDER_PRECISION = 1000000
-      const SPREAD = 0.8
+      const SPREAD = 1
+
+      let a = 0.2
+      let b = 0.2
+      let c = 5.7
+
       let attractor = {
-        a: 10,
-        b: 28,
-        c: 2.666666,
+        a,
+        b,
+        c,
         x: 0,
-        y: 10,
-        z: 10,
+        y: 0,
+        z: 0,
         color: "0xFFFFFF",
       }
+      $(`input[name='a']`).val(a * SLIDER_PRECISION)
+      $(`input[name='b']`).val(b * SLIDER_PRECISION)
+      $(`input[name='c']`).val(c * SLIDER_PRECISION)
+
       let time = 0
       let slowMotion = true
       let renderer, camera, controls, scene
       let starGeo, stars
       let container = document.getElementById("container")
-
-      const randomize = function () {
-        $(`input[name='a']`).val((Math.random() * 15 + 5) * SLIDER_PRECISION) // Good ranges: 5.0 -> 20.0 (sigma)
-        $(`input[name='b']`).val((Math.random() * 45 + 5) * SLIDER_PRECISION) // Good ranges: 5.0 -> 50.0 (rho)
-        $(`input[name='c']`).val(
-          ((Math.random() * 4 + 1) / 10) * SLIDER_PRECISION // Good ranges: 1.0 -> 5.0 (beta)
-        )
-        $("input[type='range']").trigger("input")
-      }
 
       let resolution = new THREE.Vector2(window.innerWidth, window.innerHeight)
       let smokeLines, solidLines
@@ -306,8 +274,8 @@
       function initScene(retryIfFailed) {
         lorenz.init(
           attractor.a,
-          attractor.c,
           attractor.b,
+          attractor.c,
           attractor.x,
           attractor.y,
           attractor.z
@@ -339,17 +307,17 @@
 
         let line = new THREE.MeshLine()
         line.setGeometry(geometry, (p) => {
-          return 2 + Math.sin(500 * p)
+          return 2
         })
 
         smokeLines = new THREE.Mesh(
           line.geometry,
           new THREE.MeshLineMaterial({
             color: new THREE.Color(eval(attractor.color)),
-            resolution: resolution,
+            resolution,
             sizeAttenuation: true,
-            lineWidth: 1.5 * SPREAD,
-            opacity: 0.05,
+            lineWidth: 0.5 * SPREAD,
+            opacity: 0.25,
             near: camera.near,
             far: camera.far,
             depthWrite: false,
@@ -372,7 +340,7 @@
           geometry,
           new THREE.LineBasicMaterial({
             color: new THREE.Color(0xffffff),
-            opacity: 0.25,
+            opacity: 0.5,
             transparent: true,
             blending: THREE.AdditiveBlending,
           })
@@ -391,7 +359,6 @@
         ).toString(16)}${Math.abs(Math.floor((attractor.c / 5) * 255)).toString(
           16
         )}`
-        document.getElementById("galaxy-name").innerHTML = namegen()
       }
 
       const createRenderTarget = () => {
@@ -411,6 +378,9 @@
       const init = () => {
         container = document.getElementById("container")
         scene = new THREE.Scene()
+        scene.background = new THREE.Color(0x261b1f)
+        //const axesHelper = new THREE.AxesHelper(5)
+        //scene.add(axesHelper) // TODO: Add this, not supported in current version?
         camera = new THREE.PerspectiveCamera(
           80,
           window.innerWidth / window.innerHeight,
@@ -418,7 +388,7 @@
           10000
         )
         camera.target = new THREE.Vector3(0, 0, 0)
-        camera.position.set(0, 0, 50)
+        camera.position.set(0, 0, 20)
         camera.lookAt(camera.target)
         scene.add(camera)
 
@@ -433,7 +403,6 @@
           starGeo.vertices.push(star)
         }
 
-        const sprite = new THREE.TextureLoader().load("./circle.png") // From https://threejs.org/examples/textures/sprites/circle.png
         const starMaterial = new THREE.PointsMaterial({
           color: 0xaaaaaa,
           size: 10,
@@ -441,7 +410,7 @@
           transparent: true,
           depthTest: false,
           sizeAttenuation: true,
-          map: sprite,
+          map: new THREE.TextureLoader().load("./circle.png"), // From https://threejs.org/examples/textures/sprites/circle.png,
         })
 
         stars = new THREE.Points(starGeo, starMaterial)

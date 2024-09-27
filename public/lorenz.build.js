@@ -3,23 +3,23 @@ let _points = [];
 let _nx, _ny, _nz;
 
 let x, y, z;
-let sigma, beta, rho;
+let a, b, c;
 let stepSize;
 
 function init(
-  _sigma = 10.0,
-  _beta = 2.667,
-  _rho = 28.0,
-  _x = 1,
-  _y = 1,
-  _z = 1,
+  _a = 0.2,
+  _b = 0.2,
+  _c = 5.7,
+  _x = 0,
+  _y = 0,
+  _z = 0,
   _stepSize = 0.004,
   _bailout = 1e10
 ) {
   _points = [];
-  sigma = _sigma;
-  beta = _beta;
-  rho = _rho;
+  a = _a;
+  b = _b;
+  c = _c;
   x = _x;
   y = _y;
   z = _z;
@@ -29,9 +29,9 @@ function init(
 
 function next(amount = 1) {
   while (amount > 0) {
-    _nx = sigma * (y - x);
-    _ny = x * (rho - z) - y;
-    _nz = x * y - beta * z;
+    _nx = -(y + z);
+    _ny = x + a * y;
+    _nz = b + z * (x - c);
 
     x += stepSize * _nx;
     y += stepSize * _ny;
